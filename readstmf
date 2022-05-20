@@ -35,7 +35,7 @@ dcl-pr readFile pointer extproc('_C_IFS_fgets');
 end-pr;
 
 dcl-pr closeFile extproc('_C_IFS_fclose');
-  *n pointer value;  // Misc pointer
+  *n pointer value;  // Open file
 end-pr;
 
 // C API for fetching error code
