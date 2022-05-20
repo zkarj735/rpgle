@@ -15,6 +15,9 @@
 //    whatever you require. Use rtvLine as the contents of each
 //    line. This is variable length and has all 'junk' stripped
 //    off the end.
+//
+// Based on an original by Simon Hutchinson:
+// https://www.rpgpgm.com/2016/03/a-better-way-to-read-file-in-ifs-with.html
 
 // C APIs cannot run in the default activation group
 ctl-opt option(*srcstmt) dftactgrp(*no);
