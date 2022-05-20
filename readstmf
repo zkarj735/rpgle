@@ -1,0 +1,80 @@
+**FREE
+// This code will open and read a text file from the IFS.
+// Key features:
+//  - Fully free-form using modern practices
+//  - Handles any CCSID input file (thanks to the OS)
+//  - Handles CRLF (Windows) or LF (Unix) line endings
+// To make use of this code, you should look at the following:
+//  - Make sure the rtvData variable is long enough for your file.
+//    While the API will handle reading a longer line, there is
+//    an assumption later in the code that this won't happen.
+//  - Adapt the file open error handling as appropriate.
+//    The errNo variable will have a number which you can look
+//    up the meaning of in the QSYSINC/QRPGLESRC.ERRNO member.
+//  - Replace the simple processing in the read loop with
+//    whatever you require. Use rtvLine as the contents of each
+//    line. This is variable length and has all 'junk' stripped
+//    off the end.
+
+// C APIs cannot run in the default activation group
+ctl-opt option(*srcstmt) dftactgrp(*no);
+
+// C APIs for IFS file handling
+dcl-pr openFile pointer extproc('_C_IFS_fopen');
+  *n pointer value options(*string);  // File name
+  *n pointer value options(*string);  // File mode and flags
+end-pr;
+
+dcl-pr readFile pointer extproc('_C_IFS_fgets');
+  *n pointer value;  // Retrieved data
+  *n int(10) value;  // Data size
+  *n pointer value;  // Open file
+end-pr;
+
+dcl-pr closeFile extproc('_C_IFS_fclose');
+  *n pointer value;  // Misc pointer
+end-pr;
+
+// C API for fetching error code
+dcl-pr getErrnoPtr pointer extproc('__errno');
+end-pr;
+
+// Standalones
+dcl-s filePath varchar(200);
+dcl-s openMode varchar(50);
+dcl-s filePtr pointer inz;
+dcl-s rtvData char(2000); // ENSURE this is longer than the longest line
+dcl-s maxLen int(10) inz(%size(rtvData));
+dcl-s rtvLine varchar(%size(rtvData));
+dcl-s toTrim char(2) inz(X'0D25');
+dcl-s errNo int(10) based(errnoPtr);
+
+dcl-s longest int(10);
+
+// Open the file
+filePath = '/path/to/my/file.txt';
+openMode = 'r, o_ccsid=37'; // Read only, translate to CCSID 37
+filePtr = openFile(%addr(FilePath: *data): %addr(OpenMode: *data));
+
+// Deal with an error opening the file
+if (filePtr = *null);
+  errnoPtr = getErrnoPtr();
+  dsply ('File open error ' + %char(errno));
+  return;
+endif;
+
+// Read through the file contents
+dow (readFile(%addr(rtvData): maxLen: filePtr) <> *null);
+  rtvLine = %trimr(%str(%addr(rtvData)): toTrim); // Get actual content
+  rtvData = ''; // In case the next line is shorter
+
+  if %len(rtvLine) > longest;
+    longest = %len(rtvLine);
+  endif;
+
+enddo;
+
+// Close the file
+closeFile(%addr(filePath));
+
+return;                                    
